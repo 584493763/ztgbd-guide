@@ -57,7 +57,7 @@ ztgbd-guide/
 ├── README.md
 ├── .nojekyll           禁用 Jekyll 构建
 └── assets/
-    └── fig/            23 张示例图形
+    └── fig/            23 张函数输出图形 + 5 张界面截图
 ```
 
 ## 使用要求

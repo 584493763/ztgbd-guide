@@ -201,9 +201,9 @@ footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); font
 
 <h2 class="ch" id="s2"><span class="num">2</span>GBD Results Tool 数据获取</h2>
 
-<p>ZtGBD 的全部函数以 GBD 结果表为输入，而结果表须经 IHME 的 GBD Results Tool 检索后导出，该工具不提供公开 API，无法以脚本直接拼接下载地址。本章依据 2026 年 10 月在 GBD 2023（version 8352）环境下的实际操作记录，整理检索配置、取件流程与导出文件的整理规范，使数据获取环节与后续分析函数衔接。</p>
+<p>ZtGBD 的全部函数以 GBD 结果表为输入，而结果表须经 IHME 的 GBD Results Tool 检索后导出，该工具不提供公开 API，无法以脚本直接拼接下载地址。本章整理检索配置、取件流程与导出文件的整理规范，使数据获取环节与后续分析函数衔接。</p>
 
-<p>本章不含网页截图。界面元素以英文原文标注，与页面控件文本严格一致；截图的元素位置随版本更新变动，文本对照的稳定性更高。</p>
+<p>本章插图取自 GBD Results Tool 的实际界面（英文界面、GBD 2023），用于标示控件位置与可选值；界面布局随版本更新可能调整，文字说明以控件文本为准，二者对照阅读。</p>
 
 <h3 id="g0">2.1　工具入口与前置条件</h3>
 
@@ -233,7 +233,19 @@ footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); font
   </tbody>
 </table>
 
+
+<figure>
+  <img src="assets/fig/gbd_ui_estimate.png" alt="GBD Estimate 下拉选项">
+  <figcaption>图 2-1　<code>GBD Estimate</code> 下拉的全部选项。切换该入口会改变左侧面板的控件数量与顺序：<code>Risk factor</code> 与 <code>Summary exposure value (SEV)</code> 含 Risk 控件，<code>Cause of death or injury</code> 无 Risk 控件，SEV 模式另无 Cause 控件。</figcaption>
+</figure>
+
 <p><code>GBD Estimate</code> 的完整选项还包括 <code>Probability of death, by cause</code>、<code>Etiology</code>、<code>Impairment</code>、<code>Health-adjusted life expectancy (HALE)</code>、<code>Injuries by nature</code>、<code>Population</code>、<code>Fertility</code>、<code>All-cause mortality</code>。ZtGBD 不处理人口学与期望寿命类结果，本章不展开。</p>
+
+
+<figure>
+  <img src="assets/fig/gbd_ui_risk.png" alt="Risk factor 入口控件面板">
+  <figcaption>图 2-2　<code>Risk factor</code> 入口的控件面板。与图 2-3 对照可见 Risk 控件插入于 Metric 与 Cause 之间，默认值为 <code>All risk factors</code>；<code>Measure</code> 可多选，<code>Metric</code> 三选项默认全选。</figcaption>
+</figure>
 
 <div class="note">
 <strong>与 measure 的关系</strong>　入口（<code>GBD Estimate</code>）与度量（<code>Measure</code>）是相互独立的两个维度。三个入口均可选择 <code>Deaths</code>、<code>DALYs</code>、<code>YLLs</code>、<code>YLDs</code>、<code>Prevalence</code>、<code>Incidence</code>（SEV 入口除外）。第 3 章各函数对 measure 的适用性见该章说明。
@@ -256,6 +268,12 @@ footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); font
   </tbody>
 </table>
 
+
+<figure>
+  <img src="assets/fig/gbd_ui_panel.png" alt="设置控制面板结构">
+  <figcaption>图 2-3　设置控制面板的整体结构（<code>Cause of death or injury</code> 入口）。自上而下依次为 GBD Estimate、Measure、Metric、Cause、Location、Age、Sex、Total percentage change 与 Year；每个多选框内已选值以标签形式列出，标签右侧的 × 用于删除该项。页面初始状态即为图中所示：<code>All causes</code>、<code>Global</code>、<code>All ages</code>、<code>Both</code>、2023。</figcaption>
+</figure>
+
 <h3 id="g3">2.4　年龄与 metric 的耦合关系</h3>
 
 <p>这是实际操作中后果最隐蔽的一处约束：<code>Age-standardized</code> 在 GBD 中只对应率，不含绝对数。若年龄仅勾选 <code>Age-standardized</code>，<code>Metric</code> 中的 <code>Number</code> 会被静默丢弃，导出结果仅有 <code>Rate</code>，而界面仍显示 <code>Number, Rate</code>，不具备自检提示。</p>
@@ -269,6 +287,12 @@ footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); font
   </tbody>
 </table>
 
+
+<figure>
+  <img src="assets/fig/gbd_ui_age.png" alt="Age 下拉展开">
+  <figcaption>图 2-4　<code>Age</code> 下拉展开状态。<code>All ages</code> 与 <code>Age-standardized</code> 为两个特殊行，不是年龄组；两者之下是月龄组与 5 岁组。图中 <code>All ages</code> 已勾选、<code>Age-standardized</code> 未勾选，此时 <code>Metric</code> 中的 <code>Number</code> 有效。</figcaption>
+</figure>
+
 <p>因此，「绝对数 + 标准化率并存」的导出须<b>同时勾选 <code>Age-standardized</code> 与 <code>25+ years</code></b>（或 <code>All ages</code>）。当研究人群界定为 ≥25 岁时，应使用 <code>25+ years</code> 而非 <code>All ages</code>，后者包含 0–24 岁人群。</p>
 
 <div class="warn">
@@ -278,6 +302,12 @@ footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); font
 <h3 id="g4">2.5　三条操作规则</h3>
 
 <p><b>规则一：先删默认标签，再勾具体项。</b>页面初始为 <code>All causes</code> 与 <code>All risk factors</code>。直接勾选具体节点时，父节点转入半选状态，但其标签仍留在选择框中，查询条件因此同时包含「全部」与「个别」。正确顺序为：点击父节点标签上的 <b>×</b> 删除，再搜索并勾选目标节点。</p>
+
+
+<figure>
+  <img src="assets/fig/gbd_ui_location.png" alt="Location 标签并存">
+  <figcaption>图 2-5　未删除默认值时勾选具体国家的结果（错误示范）。<code>Global</code> 与 <code>China</code> 两个标签同时存在于选择框内，等于同时请求全球汇总与中国数据；正确操作是先点击 <code>Global</code> 标签上的 × 删除，再勾选目标国家。</figcaption>
+</figure>
 
 <p><b>规则二：使用搜索框而非滚动树。</b>Cause、Risk、Location 均为数百节点的树形结构。点开下拉后在下拉内部的输入框键入英文名，树会自动过滤，再勾选复选框。</p>
 
@@ -1208,7 +1238,7 @@ l1.GBDsave(data = r_dec,   type = "Decomposition", filename_prefix = "China_Dec"
 
 <footer>
   <p>文档对应 ZtGBD 3.1.3，示例数据为按 GBD 结果表结构模拟生成，数值仅用于演示函数行为，不代表真实流行病学估计。</p>
-  <p>图形由 R 4.5.1 实际运行输出，未作后期修饰。</p>
+  <p>图形由 R 4.5.1 实际运行输出，未作后期修饰；第 2 章界面截图取自 IHME GBD Results Tool，仅用于说明操作位置。</p>
 </footer>
 
 </main>
