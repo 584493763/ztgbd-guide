@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZtGBD 使用教程 · GBD 数据的 R 语言处理流程</title>
+<style>
+:root{
+  --ink:#1a1a1a; --muted:#5b6470; --line:#d7dce3; --bg:#ffffff;
+  --code-bg:#f6f7f9; --accent:#8c1d1d; --toc-w:270px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; color:var(--ink); background:var(--bg);
+  font-family:"Source Han Sans SC","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  font-size:15.5px; line-height:1.85; letter-spacing:.01em;
+}
+#toc{
+  position:fixed; top:0; left:0; width:var(--toc-w); height:100vh; overflow-y:auto;
+  border-right:1px solid var(--line); padding:26px 18px 60px 22px; background:#fbfbfc;
+  font-size:13.5px;
+}
+#toc h2{font-size:13px; letter-spacing:.14em; color:var(--muted); margin:0 0 14px; font-weight:600}
+#toc ol{list-style:none; margin:0; padding:0}
+#toc li{margin:0}
+#toc a{
+  display:block; padding:4px 8px 4px 10px; color:#2c3540; text-decoration:none;
+  border-left:2px solid transparent; border-radius:0 3px 3px 0;
+}
+#toc a:hover{background:#eef1f5; border-left-color:#9aa4b2}
+#toc a.sub{padding-left:24px; font-size:12.8px; color:#55606d}
+main{margin-left:var(--toc-w); padding:48px 56px 120px; max-width:calc(var(--toc-w) + 880px)}
+header.doc{border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:38px}
+header.doc .kicker{font-size:12.5px; letter-spacing:.22em; color:var(--accent); font-weight:600}
+header.doc h1{font-size:30px; line-height:1.35; margin:10px 0 8px; font-weight:700}
+header.doc .meta{color:var(--muted); font-size:13.5px}
+h2.ch{font-size:22px; margin:56px 0 6px; padding-top:14px; border-top:1px solid var(--line); font-weight:700}
+h2.ch .num{color:var(--accent); font-weight:700; margin-right:10px}
+h3{font-size:17px; margin:32px 0 8px; font-weight:700}
+h4{font-size:15px; margin:22px 0 6px; font-weight:600; color:#26303c}
+p{margin:10px 0}
+ul,ol{margin:10px 0 10px 22px; padding:0}
+li{margin:4px 0}
+code{
+  font-family:"Cascadia Mono",Consolas,"SFMono-Regular",monospace; font-size:13px;
+  background:var(--code-bg); padding:1px 5px; border-radius:3px; border:1px solid #e6e9ee;
+}
+pre{
+  background:var(--code-bg); border:1px solid #e6e9ee; border-left:3px solid #9aa4b2;
+  padding:14px 16px; overflow-x:auto; margin:14px 0; border-radius:3px;
+}
+pre code{background:none; border:0; padding:0; font-size:12.6px; line-height:1.65}
+table{border-collapse:collapse; width:100%; margin:16px 0; font-size:13.6px}
+table caption{caption-side:top; text-align:left; font-size:13px; color:var(--muted); padding-bottom:6px}
+th,td{padding:7px 10px; border-bottom:1px solid #e6e9ee; text-align:left; vertical-align:top}
+thead th{border-top:2px solid var(--ink); border-bottom:1px solid var(--ink); font-weight:600; background:#fafbfc}
+tbody tr:last-child td{border-bottom:2px solid var(--ink)}
+td code{white-space:nowrap}
+figure{margin:22px 0 26px; padding:0}
+figure img{width:100%; border:1px solid var(--line); border-radius:3px; background:#fff}
+figcaption{font-size:13px; color:var(--muted); margin-top:8px; line-height:1.7}
+.note,.warn{
+  border-left:3px solid var(--accent); background:#fdf7f7; padding:10px 14px; margin:16px 0;
+  font-size:14px;
+}
+.warn{border-left-color:#b8860b; background:#fdfaf1}
+.note strong,.warn strong{font-weight:600}
+.sig{background:#f8f9fb; border:1px solid var(--line); padding:12px 14px; margin:12px 0; font-size:13.4px}
+.tag{
+  display:inline-block; font-size:11.5px; letter-spacing:.06em; padding:1px 7px;
+  border:1px solid var(--line); border-radius:10px; color:var(--muted); margin-left:8px; vertical-align:middle;
+}
+footer{margin-top:70px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--muted)}
+@media (max-width:900px){
+  #toc{position:static; width:auto; height:auto; border-right:0; border-bottom:1px solid var(--line)}
+  main{margin-left:0; padding:28px 20px 80px; max-width:none}
+}
+</style>
+</head>
+<body>
+
+<nav id="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#s1">1　包体结构与运行环境</a></li>
+    <li><a href="#s2">2　数据准备与筛选</a></li>
+    <li><a href="#s2">　　<a class="sub" href="#a1">a1.GBDread　数据读取</a></li>
+    <li><a class="sub" href="#a2">a2.GBDFactor　因子化</a></li>
+    <li><a class="sub" href="#a3">a3.GBDfilter　条件筛选</a></li>
+    <li><a href="#s3">3　率与趋势指标</a></li>
+    <li><a class="sub" href="#b1">b1.ASR　年龄标准化率</a></li>
+    <li><a class="sub" href="#b2">b2.ASRrei　归因率标化</a></li>
+    <li><a class="sub" href="#b3">b3.EAPC　估计年度变化百分比</a></li>
+    <li><a href="#s4">4　三线表输出</a></li>
+    <li><a class="sub" href="#b4">b4.GBDtable　表格数据组织</a></li>
+    <li><a class="sub" href="#b5">b5.GBDtable2　Word 表格导出</a></li>
+    <li><a href="#s5">5　描述性图形</a></li>
+    <li><a class="sub" href="#c1">c1.plotLine　折线图</a></li>
+    <li><a class="sub" href="#c2">c2.plotNumberRate　双轴图</a></li>
+    <li><a class="sub" href="#c3">c3.plotPyramid　人口金字塔</a></li>
+    <li><a class="sub" href="#c4">c4.modifyplot　图形修饰</a></li>
+    <li><a class="sub" href="#c5">c5.plotBar　柱状图</a></li>
+    <li><a href="#s6">6　地理分布制图</a></li>
+    <li><a class="sub" href="#d1">d1.Mapquantile　分位分组</a></li>
+    <li><a class="sub" href="#d2">d2.Map　世界地图</a></li>
+    <li><a href="#s7">7　年龄-时期-队列模型</a></li>
+    <li><a class="sub" href="#e1">e1.APC　模型拟合</a></li>
+    <li><a class="sub" href="#e2">e2.plotAPC　效应曲线</a></li>
+    <li><a href="#s8">8　Joinpoint 回归</a></li>
+    <li><a class="sub" href="#f1">f1.Joinpoint　转折点估计</a></li>
+    <li><a class="sub" href="#f2">f2.plotJoinpoint　单组拟合图</a></li>
+    <li><a class="sub" href="#f3">f3.plotJoinpoint2　多组拟合图</a></li>
+    <li><a href="#s9">9　疾病负担分解</a></li>
+    <li><a class="sub" href="#g1">g1.decomposition　三因素分解</a></li>
+    <li><a class="sub" href="#g2">g2.plotDecom　分解结果图示</a></li>
+    <li><a href="#s10">10　趋势预测</a></li>
+    <li><a class="sub" href="#h1">h1.GBDBAPC　贝叶斯 APC 预测</a></li>
+    <li><a class="sub" href="#h2">h2/h3　预测结果图示</a></li>
+    <li><a class="sub" href="#h4">h4.GBDARIMA　ARIMA 预测</a></li>
+    <li><a class="sub" href="#h5">h5.plotARIMA　预测曲线</a></li>
+    <li><a href="#s11">11　前沿分析</a></li>
+    <li><a class="sub" href="#i1">i1.Frontier　前沿估计</a></li>
+    <li><a class="sub" href="#i2">i2.plotFrontier　前沿图</a></li>
+    <li><a href="#s12">12　健康不平等</a></li>
+    <li><a class="sub" href="#j1">j1.GBDInequality　SII 与集中指数</a></li>
+    <li><a class="sub" href="#j2">j2/j3　不平等曲线</a></li>
+    <li><a href="#s13">13　SDI 与风险因素</a></li>
+    <li><a class="sub" href="#k1">k1.plotSDIASR　SDI 关联</a></li>
+    <li><a class="sub" href="#k2">k2–k4　风险因素可视化</a></li>
+    <li><a href="#s14">14　质量照护指数</a></li>
+    <li><a href="#s15">15　结果导出</a></li>
+    <li><a href="#s16">16　常见问题</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="doc">
+  <div class="kicker">R PACKAGE MANUAL</div>
+  <h1>ZtGBD 使用教程<br><span style="font-size:19px;font-weight:500;color:#4a5460">全球疾病负担数据的读取、统计、建模与可视化</span></h1>
+  <div class="meta">适用版本：ZtGBD 3.1.3　|　运行环境：R 4.5.1 / Windows x64　|　图形由本文档对应脚本实际运行产生</div>
+</header>
+
+<h2 class="ch" id="s1"><span class="num">1</span>包体结构与运行环境</h2>
+
+<p>ZtGBD 是一套面向全球疾病负担（Global Burden of Disease, GBD）数据的 R 函数集合，覆盖数据读取与整理、率指标计算、趋势与预测建模、健康不平等测度以及结果图形化五个环节。函数命名采用「字母分类 + 数字序号 + 功能名」的规则，字母对应分析阶段，数字对应该阶段内的执行次序。</p>
+
+<table>
+  <caption>表 1-1　函数分组与功能对应关系</caption>
+  <thead><tr><th style="width:86px">前缀</th><th style="width:180px">环节</th><th>函数</th></tr></thead>
+  <tbody>
+    <tr><td><code>a</code></td><td>数据准备</td><td>a1.GBDread、a2.GBDFactor、a3.GBDfilter</td></tr>
+    <tr><td><code>b</code></td><td>统计指标</td><td>b1.ASR、b2.ASRrei、b3.EAPC、b4.GBDtable、b5.GBDtable2</td></tr>
+    <tr><td><code>c</code></td><td>描述图形</td><td>c1.plotLine、c2.plotNumberRate、c3.plotPyramid、c4.modifyplot、c5.plotBar</td></tr>
+    <tr><td><code>d</code></td><td>地理制图</td><td>d1.Mapquantile、d2.Map</td></tr>
+    <tr><td><code>e</code></td><td>APC 模型</td><td>e1.APC、e2.plotAPC</td></tr>
+    <tr><td><code>f</code></td><td>Joinpoint 回归</td><td>f1.Joinpoint、f2.plotJoinpoint、f3.plotJoinpoint2</td></tr>
+    <tr><td><code>g</code></td><td>分解分析</td><td>g1.decomposition、g2.plotDecom</td></tr>
+    <tr><td><code>h</code></td><td>趋势预测</td><td>h1.GBDBAPC、h2.plotPredASR、h3.plotPredNumberASR、h4.GBDARIMA、h5.plotARIMA</td></tr>
+    <tr><td><code>i</code></td><td>前沿分析</td><td>i1.Frontier、i2.plotFrontier</td></tr>
+    <tr><td><code>j</code></td><td>健康不平等</td><td>j1.GBDInequality、j2.SIIplot、j3.CIplot</td></tr>
+    <tr><td><code>k</code></td><td>SDI 与风险因素</td><td>k1.plotSDIASR、k2.plotHeatRisk、k3.plotRankRisk、k4.plotHeatRank</td></tr>
+    <tr><td><code>l</code></td><td>结果导出</td><td>l1.GBDsave</td></tr>
+    <tr><td><code>m</code></td><td>综合评价</td><td>m1.GBDQCI</td></tr>
+  </tbody>
+</table>
+
+<h3>1.1　环境要求</h3>
+<p>包体声明 R ≥ 3.5，实际运行建议 R ≥ 4.2。函数内部依赖 <code>data.table</code>、<code>dplyr</code>、<code>tidyr</code>、<code>ggplot2</code>、<code>sf</code>、<code>patchwork</code>、<code>ggsci</code>、<code>flextable</code>、<code>officer</code>、<code>Epi</code>、<code>etm</code>、<code>forecast</code>、<code>foreach</code>、<code>doParallel</code> 等 51 个包。缺失依赖会导致 <code>library(ZtGBD)</code> 在加载阶段直接失败，而非在调用函数时报错。</p>
+
+<div class="sig">
+安装后以命名空间加载成功作为验收标准：<br>
+<code>requireNamespace("ZtGBD", quietly = TRUE)</code> 返回 <code>TRUE</code>，且 <code>library(ZtGBD)</code> 无报错。
+</div>
+
+<h3>1.2　可选依赖与功能边界</h3>
+<p>以下功能依赖额外的包，未安装时不影响主流程：</p>
+<table>
+  <thead><tr><th style="width:200px">功能</th><th style="width:170px">依赖</th><th>未安装时的表现</th></tr></thead>
+  <tbody>
+    <tr><td>h1.GBDBAPC 及 h2、h3</td><td>INLA、BAPC</td><td>调用即报「there is no package called 'INLA'」</td></tr>
+    <tr><td>f1.Joinpoint 及 f2、f3</td><td>随包提供的 jpCommand.exe（Windows）</td><td>非 Windows 平台无法执行</td></tr>
+    <tr><td>d2.Map</td><td>sf 与随包提供的 worldmap 矢量文件</td><td>读取地图文件失败</td></tr>
+  </tbody>
+</table>
+
+<h3>1.3　授权与工作目录</h3>
+<p>3.x 版本在 <code>.onLoad</code> 阶段调用 <code>checkManage()</code> 校验授权，校验采用联网方式，且授权文件路径由 <code>getwd()</code> 决定，即 <code>getwd()/config/license</code>。由此产生两项操作约束：</p>
+<ul>
+  <li>工作目录变更后需在新目录下重新放置授权文件，否则每次加载均会弹出授权输入提示。</li>
+  <li><code>setwd()</code> 必须早于 <code>library(ZtGBD)</code>；加载完成后再设置目录不影响本次校验。</li>
+</ul>
+<p>授权码为单行文本，<code>readLines()</code> 仅读取文件首行，故文件中不得包含引号、换行或多段内容。</p>
+
+<h2 class="ch" id="s2"><span class="num">2</span>数据准备与筛选</h2>
+
+<p>GBD 结果表以长表形式导出，字段包括 <code>measure</code>（指标）、<code>location</code>（地区）、<code>sex</code>（性别）、<code>age</code>（年龄组）、<code>cause</code>（病因）、<code>rei</code>（风险因素）、<code>metric</code>（数值类型）、<code>year</code>（年份）、<code>val</code>（点估计）、<code>lower</code> 与 <code>upper</code>（95% 不确定性区间）。后续全部函数均以该结构为前提。</p>
+
+<h3 id="a1">2.1　a1.GBDread：批量读取与合并</h3>
+<p>将指定目录下的全部 CSV 或 ZIP 文件读入并纵向合并为单一数据框。该函数不做维度校验，目录内的所有表格按列名对齐合并。</p>
+<pre><code>a1.GBDread(ZIP_folder = FALSE, CSV_folder = TRUE, WorkPath = "")</code></pre>
+<table>
+  <thead><tr><th style="width:130px">参数</th><th style="width:90px">默认值</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>ZIP_folder</code></td><td><code>FALSE</code></td><td>数据为多个 ZIP 压缩包时设为 <code>TRUE</code></td></tr>
+    <tr><td><code>CSV_folder</code></td><td><code>TRUE</code></td><td>数据为 CSV 文件时保持默认</td></tr>
+    <tr><td><code>WorkPath</code></td><td><code>""</code></td><td>数据目录；空字符串表示当前工作目录</td></tr>
+  </tbody>
+</table>
+<pre><code>dat &lt;- a1.GBDread(ZIP_folder = FALSE, CSV_folder = TRUE,
+                  WorkPath = "D:/GBD/data/core")
+
+dim(dat)
+# [1] 150552     10
+names(dat)
+#  [1] "measure"  "location" "sex"      "age"      "cause"
+#  [6] "metric"   "year"     "val"      "lower"    "upper"</code></pre>
+
+<div class="note">
+<strong>目录组织要求</strong>　函数对目录内所有 CSV 无差别合并。若不同检索任务（如核心总量、组分拆分、省级细分）的表格存放于同一文件夹，合并结果将混入互斥维度，后续统计失去意义。建议按任务建立子目录，分别读取。
+</div>
+
+<h3 id="a2">2.2　a2.GBDFactor：维度因子化与排序</h3>
+<p>GBD 原始表的维度为字符型，绘图与建模时需要固定顺序。该函数将指定维度转为有序因子，其中 <code>age</code> 默认处理，以保证年龄组按 5 岁间隔递增而非字典序排列。</p>
+<pre><code>a2.GBDFactor(data, measure_order = FALSE, location_order = FALSE,
+             sex_order = FALSE, age_order = TRUE,
+             rei_order = FALSE, cause_order = FALSE)</code></pre>
+<pre><code>dat2 &lt;- a2.GBDFactor(data = dat, measure_order = TRUE, location_order = TRUE,
+                     sex_order = TRUE, age_order = TRUE, cause_order = TRUE)
+
+class(dat2$age)
+# [1] "ordered" "factor"
+head(levels(dat2$age), 3)
+# [1] "5 to 9"   "10 to 14" "15 to 19"</code></pre>
+<p>参数 <code>*_order</code> 取 <code>TRUE</code> 时，该维度按包内预置顺序（<code>zstatsfactor_order</code>）排列；取 <code>FALSE</code> 时保留字符型，适用于不需要固定顺序的中间数据。</p>
+
+<h3 id="a3">2.3　a3.GBDfilter：条件筛选</h3>
+<p>对维度施加筛选条件，支持「类别名称」与「数字编号」两种写法，编号语义见下表。该函数是后续所有分析的数据入口。</p>
+<pre><code>a3.GBDfilter(data, measure = NULL, location = NULL, sex = NULL, age = NULL,
+             rei = NULL, cause = NULL, metric = NULL, year = NULL,
+             year_range = NULL, exclude_location = FALSE)</code></pre>
+<table>
+  <caption>表 2-1　维度编号与取值的对应关系</caption>
+  <thead><tr><th style="width:110px">维度</th><th>编号语义</th></tr></thead>
+  <tbody>
+    <tr><td><code>measure</code></td><td>1 Incidence　2 Prevalence　3 Deaths　4 DALYs　5 YLDs　6 YLLs　7 SEV　8 前四类合并</td></tr>
+    <tr><td><code>location</code></td><td>1 超级地区　2 SDI 分区　3 GBD 地区　4 China　5 Global</td></tr>
+    <tr><td><code>sex</code></td><td>1 Male　2 Female　3 Both</td></tr>
+    <tr><td><code>age</code></td><td>1 年龄标化　2 全年龄　3 0–95+ 全段　4 0–14 岁　5 15–49 岁　6 0–24 岁　7 10–24 岁　8 50–95+　9 60+</td></tr>
+    <tr><td><code>metric</code></td><td>1 Number　2 Rate　3 Percent</td></tr>
+  </tbody>
+</table>
+<pre><code># 取 2023 年全球两性死亡人数（全年龄）
+d1 &lt;- a3.GBDfilter(data = dat, measure = 3, sex = c("1", "2"),
+                   age = 2, location = 5, year = 2023)
+dim(d1)
+# [1] 12  9
+
+# 取 204 个国家：先选出汇总地区，再以 exclude_location 反向排除
+d2 &lt;- a3.GBDfilter(data = dat, location = c("1", "2", "3", "5"),
+                   exclude_location = TRUE)</code></pre>
+
+<div class="warn">
+<strong>数据框类型</strong>　<code>a1.GBDread()</code> 返回 <code>data.table</code> 对象。在该类型下，<code>a3.GBDfilter()</code> 的筛选条件可能因参数名与列名同名而不生效（返回全量数据）。执行 <code>dat &lt;- as.data.frame(dat)</code> 转换后调用可规避此问题；本教程后续示例均基于转换后的 <code>data.frame</code>。
+</div>
+
+<h2 class="ch" id="s3"><span class="num">3</span>率与趋势指标</h2>
+
+<h3 id="b1">3.1　b1.ASR：指定年龄段的年龄标准化率</h3>
+<p>按 GBD 标准人口权重重新计算年龄标准化率，可限定年龄区间，用于分析特定人群（如 25–64 岁劳动力人口）而非全人群的疾病负担。</p>
+<pre><code>b1.ASR(data, from_age = 15, to_age = 45, CI = TRUE)</code></pre>
+<table>
+  <thead><tr><th style="width:120px">参数</th><th style="width:90px">默认值</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>data</code></td><td>—</td><td>不含 <code>rei</code> 列的数据框，须同时包含 <code>Number</code> 与 <code>Rate</code> 两类 <code>metric</code></td></tr>
+    <tr><td><code>from_age</code></td><td><code>15</code></td><td>起始年龄，取年龄组左端点，需为 5 的倍数</td></tr>
+    <tr><td><code>to_age</code></td><td><code>45</code></td><td>结束年龄，取年龄组左端点；95 表示 95 plus</td></tr>
+    <tr><td><code>CI</code></td><td><code>TRUE</code></td><td>是否依据区间上下限传播计算 95% 不确定性区间</td></tr>
+  </tbody>
+</table>
+<pre><code>db1 &lt;- a3.GBDfilter(data = dat, measure = 3, age = c("3", "1", "2"),
+                    location = c("China", "Global"))
+r1  &lt;- b1.ASR(data = db1, from_age = 25, to_age = 60, CI = TRUE)
+
+head(r1[r1$age == "Age-standardized", c("location", "year", "val", "lower", "upper")])
+#   location year      val    lower    upper
+# 1    China 1990 87.91503 80.88182 95.82738
+# 2    China 1991 88.38372 81.31303 96.33826</code></pre>
+<p>返回结果为长表，<code>age</code> 列仅保留 <code>Age-standardized</code> 与 <code>All ages</code> 两行，其余 5 岁年龄组行被剔除。若数据中存在 <code>rei</code> 列（即使是全 <code>NA</code>），函数将拒绝执行并提示改用 <code>b2.ASRrei()</code>。</p>
+
+<h3 id="b2">3.2　b2.ASRrei：归因负担的年龄标准化率</h3>
+<p>与 <code>b1.ASR()</code> 计算逻辑一致，区别在于要求数据包含 <code>rei</code> 列，并按风险因素分组输出。</p>
+<pre><code>b2.ASRrei(data, from_age = 15, to_age = 45, CI = TRUE)</code></pre>
+<pre><code>drei &lt;- dat[dat$measure == "Deaths", ]
+drei$rei &lt;- "Smoking"
+db2 &lt;- a3.GBDfilter(data = drei, age = c("3", "1", "2"),
+                    location = c("China", "Global"))
+r2  &lt;- b2.ASRrei(data = db2, from_age = 25, to_age = 60, CI = TRUE)
+
+unique(r2$rei)
+# [1] "Smoking"</code></pre>
+
+<h3 id="b3">3.3　b3.EAPC：估计年度变化百分比</h3>
+<p>以年份为自变量、对数率为因变量建立线性回归，将斜率换算为年度变化百分比，用于概括单调趋势。该方法假设整个观察期内的变化速率恒定，不识别转折点；若趋势存在分段特征，应改用 Joinpoint 回归（第 8 章）。</p>
+<pre><code>b3.EAPC(data, rei = FALSE, CI = TRUE, decimal_places = 2, ci_connector = " to ")</code></pre>
+<pre><code>db3 &lt;- dat[dat$age == "Age-standardized", ]
+r3  &lt;- b3.EAPC(data = db3)
+
+head(r3[, c("location", "cause", "EAPC", "EAPC_95CI")], 3)
+#   location                               cause  EAPC            EAPC_95CI
+# 1   Brazil              Ischemic heart disease -0.99 -0.99\n(-1.01 to -0.96)
+# 2   Brazil                              Stroke -1.59 -1.59\n(-1.62 to -1.57)
+# 3   Brazil Tracheal, bronchus, and lung cancer  0.39    0.39\n(0.37 to 0.41)</code></pre>
+<p>返回列中 <code>EAPC</code> 为点估计，<code>LowerCI</code> 与 <code>UpperCI</code> 为区间端点，<code>EAPC_95CI</code> 为拼接后的字符串，可直接用于表格。区间不含 0 视为趋势具有统计学意义。</p>
+
+<h2 class="ch" id="s4"><span class="num">4</span>三线表输出</h2>
+
+<h3 id="b4">4.1　b4.GBDtable：表格数据的组织</h3>
+<p>将长表整理为论文三线表所需的宽表，一次性给出基准年与对比年的数量、标化率及其区间，并附趋势指标。</p>
+<pre><code>b4.GBDtable(data, rei = FALSE, digits_rate = 2, digits_number = 0,
+            ci_connector = " to ", type = c("EAPC", "ARC", "AAPC", "None"),
+            ARC_data = NULL, ASR = FALSE)</code></pre>
+<table>
+  <thead><tr><th style="width:110px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>type</code></td><td><code>"EAPC"</code> 附回归法年变化；<code>"AAPC"</code> 附 Joinpoint 平均年变化；<code>"ARC"</code> 合并外部下载的总变化率数据；<code>"None"</code> 仅列两年数值</td></tr>
+    <tr><td><code>ARC_data</code></td><td><code>type = "ARC"</code> 时必需，需含 measure、location、sex、cause、age、val、lower、upper</td></tr>
+    <tr><td><code>digits_rate</code> / <code>digits_number</code></td><td>率与数量的小数位，默认分别为 2 与 0</td></tr>
+  </tbody>
+</table>
+<pre><code>db4 &lt;- a3.GBDfilter(data = dat, measure = 3, age = c("1", "2"),
+                    location = c("4", "5"))
+r4  &lt;- b4.GBDtable(data = db4, rei = FALSE, type = "EAPC", ASR = TRUE)
+
+dim(r4)
+# [1] 18  8
+names(r4)
+# [1] "location" "sex" "cause" "Number\n1990 (95% UI)" "ASR per 100,000\n1990 (95% UI)"
+# [5] "Number\n2023 (95% UI)" "ASR per 100,000\n2023 (95% UI)" "EAPC\n(95% CI)"</code></pre>
+<div class="note">
+<strong>输入数据门槛</strong>　<code>type = "EAPC"</code> 要求同一分组同时具备「<code>metric = Number</code> 且 <code>age = All ages</code>」与「<code>metric = Rate</code> 且 <code>age = Age-standardized</code>」两类记录，且年份覆盖基准年与对比年。若仅筛出年龄标化行，函数将因缺失列而中断，错误信息为 <code>Elements "Number\n1990 (95% UI)" don't exist</code>。
+</div>
+
+<h3 id="b5">4.2　b5.GBDtable2：Word 表格导出</h3>
+<p>基于 <code>flextable</code> 与 <code>officer</code> 将宽表渲染为三线表样式，支持多级表头合并与列名重写，可直接写入 docx。</p>
+<pre><code>b5.GBDtable2(data, merge_h_list = NULL, head_list = NULL,
+             var_list = NULL, view = TRUE, path = NULL)</code></pre>
+<pre><code>b5.GBDtable2(data = r4,
+             merge_h_list = c("4:5", "6:7", "8:8"),
+             head_list    = c("1990", "2023", "1990-2023"),
+             view = FALSE,
+             path = "table_example.docx")</code></pre>
+<table>
+  <thead><tr><th style="width:150px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>merge_h_list</code></td><td>需横向合并的列区间，字符串形式，如 <code>"4:5"</code> 表示第 4 至 5 列共用一个表头</td></tr>
+    <tr><td><code>head_list</code></td><td>合并区域的表头文字，顺序与 <code>merge_h_list</code> 对应</td></tr>
+    <tr><td><code>var_list</code></td><td>逐列显示名，留空则沿用列名</td></tr>
+    <tr><td><code>path</code></td><td>docx 输出路径；<code>NULL</code> 表示仅在控制台显示</td></tr>
+  </tbody>
+</table>
+<p>合并区间需按实际列序计算。<code>b4.GBDtable()</code> 的输出中前 3 列为标识列（location、sex、cause），其后依次为 1990 年数量、1990 年标化率、2023 年数量、2023 年标化率、趋势值，共 8 列。</p>
+
+<h2 class="ch" id="s5"><span class="num">5</span>描述性图形</h2>
+
+<h3 id="c1">5.1　c1.plotLine：折线图</h3>
+<p>按年龄或年份绘制率指标折线，可依性别、地区、病因分组，并绘制 95% 不确定性区间。</p>
+<pre><code>c1.plotLine(data, group = "sex", X_var = "age", groupcolor = "a",
+            group_colors = NULL, CI = TRUE, ci_style = "auto",
+            ci_linewidth = 0.8, ylab = NULL, xlab = NULL,
+            legend_title = NULL, x_breaks = NULL, metric_type = "Rate")</code></pre>
+<table>
+  <thead><tr><th style="width:130px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>group</code></td><td>分组列名，可填 <code>"sex"</code>、<code>"location"</code>、<code>"cause"</code> 等</td></tr>
+    <tr><td><code>X_var</code></td><td>横轴变量，<code>"age"</code> 或 <code>"year"</code></td></tr>
+    <tr><td><code>ci_style</code></td><td><code>"auto"</code> 时数值轴用带状、离散轴用误差条；亦可指定 <code>"ribbon"</code> 或 <code>"errorbar"</code></td></tr>
+    <tr><td><code>metric_type</code></td><td>取 <code>"Rate"</code> 或 <code>"Number"</code>，决定筛选哪一类 <code>metric</code></td></tr>
+    <tr><td><code>groupcolor</code> / <code>group_colors</code></td><td>内置配色方案（a/b/c）与自定义颜色向量，后者优先</td></tr>
+  </tbody>
+</table>
+<pre><code>d1 &lt;- a3.GBDfilter(data = dat, measure = 3, sex = c("1", "2"), age = 3,
+                   location = 5, year = 2023,
+                   cause = "Ischemic heart disease")
+d1 &lt;- a2.GBDFactor(data = d1, sex_order = TRUE)
+
+c1.plotLine(data = d1, group = "sex", X_var = "age",
+            legend_title = "Sex", ylab = "Deaths rate (per 100,000)",
+            xlab = "Age group", metric_type = "Rate")</code></pre>
+
+<figure>
+  <img src="assets/fig/c1_plotLine.png" alt="年龄别死亡率折线图">
+  <figcaption>图 5-1　2023 年全球缺血性心脏病年龄别死亡率（每 10 万），按性别分组。纵轴为对数增长形态，60 岁以后上升加快，95 plus 组达峰值；两性曲线基本重合，误差条为 95% 不确定性区间。</figcaption>
+</figure>
+
+<div class="warn">
+<strong>单病种约束</strong>　当数据含多个 <code>cause</code> 而未加筛选时，同一横轴位置会叠加多个病种观测，折线呈锯齿状交替，图形不可解释。绘制前应对 <code>cause</code> 施加筛选。
+</div>
+
+<h3 id="c2">5.2　c2.plotNumberRate：数量与率双轴图</h3>
+<p>左轴为绝对数量（柱形），右轴为率（折线），用于同时呈现负担规模与人群风险两个维度。数量随人口老龄化上升而率下降时，两轴走向相反，可直观反映人口结构效应。</p>
+<pre><code>c2.plotNumberRate(data, group = "sex", X_var = "year", scale_ratio = "auto",
+                  groupcolor = "a", group_colors = NULL, CI = TRUE,
+                  ylab_left = NULL, ylab_right = NULL, xlab = NULL,
+                  linesize = 1, legend_title = NULL, x_breaks = NULL)</code></pre>
+<pre><code>d2 &lt;- a3.GBDfilter(data = dat, measure = 3, sex = c("1", "2"),
+                   age = c("1", "2"), location = 5, year = 1990:2023,
+                   cause = "Ischemic heart disease")
+
+c2.plotNumberRate(data = d2, group = "sex", X_var = "year",
+                  legend_title = "Sex",
+                  ylab_left = "Deaths", ylab_right = "ASMR (per 100,000)")</code></pre>
+
+<figure>
+  <img src="assets/fig/c2_plotNumberRate.png" alt="数量与率双轴图">
+  <figcaption>图 5-2　1990—2023 年全球缺血性心脏病死亡数与年龄标化死亡率。柱形为死亡人数，折线为 ASMR（右轴）。死亡数持续上升，ASMR 持续下降，二者的背离指示人口增长与老龄化的作用方向。</figcaption>
+</figure>
+
+<p><code>scale_ratio</code> 控制折线与柱形的高度比例，取 <code>"auto"</code> 时按数据极值自动匹配；设为数值则在该基准上缩放，用于调整折线在视觉上的位置。</p>
+
+<h3 id="c3">5.3　c3.plotPyramid：人口金字塔</h3>
+<p>以年龄为纵轴、性别为横向分组，男性取正值、女性取负值，用于比较各年龄段的性别负担差异。</p>
+<pre><code>c3.plotPyramid(data, group = "location", X_var = "age", measure = NULL,
+               location = NULL, age = NULL, rei = NULL, cause = NULL,
+               metric = NULL, year = NULL, color_scheme = "groupcolor1",
+               show_value = TRUE, value_size = 4, legend_size = 5)</code></pre>
+<pre><code>d3 &lt;- a3.GBDfilter(data = dat, measure = 3, sex = c("1", "2"), age = 3,
+                   location = 5, metric = 2, year = 2023,
+                   cause = "Ischemic heart disease")
+
+c3.plotPyramid(data = d3, group = "location", X_var = "age",
+               show_value = FALSE)</code></pre>
+
+<figure>
+  <img src="assets/fig/c3_plotPyramid.png" alt="年龄性别金字塔">
+  <figcaption>图 5-3　2023 年全球缺血性心脏病死亡率的人口金字塔。纵向为年龄组，横向为死亡率（每 10 万），男性居右、女性居左。高年龄组两侧同时外扩，提示该病负担集中于老年人群。</figcaption>
+</figure>
+
+<h3 id="c4">5.4　c4.modifyplot：图形修饰</h3>
+<p>对已生成的 ggplot 对象追加样式设置，涵盖标题、坐标轴、图例、配色、字体与边框。该函数返回新的图层叠加结果，不修改原始对象。</p>
+<pre><code>c4.modifyplot(p, title = NULL, xlab = NULL, ylab = NULL,
+              legend_title = NULL, legend_labels = NULL, xlim = NULL, ylim = NULL,
+              x_breaks = NULL, y_breaks = NULL, log_y = NULL,
+              theme_background = NULL, show_grid = NULL, panel_border = NULL,
+              font_family = NULL, line_size = NULL, show_CI = NULL,
+              legend_position = NULL, legend_direction = NULL,
+              x_angle = NULL, text_size = NULL, axis_line = NULL, ...)</code></pre>
+<pre><code>p &lt;- c1.plotLine(data = d1, group = "sex", X_var = "age",
+                 legend_title = "Sex", ylab = "Deaths rate (per 100,000)",
+                 xlab = "Age group")
+
+c4.modifyplot(p = p, title = "Age-specific mortality, Global, 2023",
+              legend_position = "top", legend_direction = "horizontal",
+              axis_line = TRUE, axis_line_sides = c("left", "bottom"),
+              x_angle = 45, text_size = 11)</code></pre>
+
+<figure>
+  <img src="assets/fig/c4_modifyplot.png" alt="图形修饰结果">
+  <figcaption>图 5-4　经 <code>c4.modifyplot()</code> 修饰后的图形。横轴标签旋转 45°，图例移至顶部并横向排列，轴线仅保留左侧与底部，标题居左。</figcaption>
+</figure>
+
+<h3 id="c5">5.5　c5.plotBar：柱状图</h3>
+<p>与 <code>c1.plotLine()</code> 参数结构一致，输出形式为并列柱形，适用于年龄组数量较少或需要强调组间绝对差异的情形。</p>
+<pre><code>c5.plotBar(data, group = "sex", X_var = "age", groupcolor = "a",
+           group_colors = NULL, CI = TRUE, ci_style = "auto",
+           ci_linewidth = 0.8, ylab = NULL, xlab = NULL,
+           legend_title = NULL, x_breaks = NULL, metric_type = "Rate")</code></pre>
+<pre><code>c5.plotBar(data = d1, group = "sex", X_var = "age",
+           legend_title = "Sex", ylab = "Deaths rate (per 100,000)",
+           xlab = "Age group", metric_type = "Rate")</code></pre>
+
+<figure>
+  <img src="assets/fig/c5_plotBar.png" alt="年龄别死亡率柱状图">
+  <figcaption>图 5-5　2023 年全球缺血性心脏病年龄别死亡率柱状图。与图 5-1 使用同一数据集，柱形更易定位单一年龄组的量级。</figcaption>
+</figure>
+
+<h2 class="ch" id="s6"><span class="num">6</span>地理分布制图</h2>
+
+<h3 id="d1">6.1　d1.Mapquantile：连续变量分位分组</h3>
+<p>将连续变量按分位数切分为等级因子，供离散色阶地图使用。分组边界由样本分位点确定，各组观测数近似相等。</p>
+<pre><code>d1.Mapquantile(data, n = 5, decimal_places = 2)</code></pre>
+<pre><code>dm     &lt;- mapd[mapd$year == 2023 &amp; mapd$metric == "Rate", ]
+dm$val2 &lt;- d1.Mapquantile(data = dm$val, n = 5, decimal_places = 2)
+
+levels(dm$val2)
+# [1] "&lt;26.4"           "26.4 to &lt;32.52"  "32.52 to &lt;36.6"
+# [4] "36.6 to &lt;41.69"  "41.69 to &lt;51.94"</code></pre>
+
+<h3 id="d2">6.2　d2.Map：世界地图</h3>
+<p>依据变量类型自动选择连续或离散色阶，输出主图与小区域放大图。地图数据由包内 <code>worldmap</code> 矢量文件提供，地区名须与该文件一致。</p>
+<pre><code>d2.Map(data, variable, discrete_colors = NULL, color_group = "a",
+       continuous_colors = NULL, cont_color_group = "a",
+       legend_title = NULL, show_na = TRUE, show_small_map = TRUE,
+       longitude_min = NULL, longitude_max = NULL,
+       latitude_min = NULL, latitude_max = NULL)</code></pre>
+<table>
+  <thead><tr><th style="width:150px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>variable</code></td><td>待映射的列名，字符串形式；连续或因子型均可</td></tr>
+    <tr><td><code>show_na</code></td><td>是否将无数据国家以灰色显示</td></tr>
+    <tr><td><code>show_small_map</code></td><td>是否附加加勒比、波斯湾、巴尔干等区域放大图</td></tr>
+    <tr><td><code>longitude_*</code> / <code>latitude_*</code></td><td>裁剪范围，用于区域专题图</td></tr>
+  </tbody>
+</table>
+
+<pre><code># 连续色阶
+d2.Map(data = dm, variable = "val", legend_title = "ASMR (per 100,000)")
+
+# 离散色阶（五分位）
+d2.Map(data = dm, variable = "val2", legend_title = "ASMR quintile")</code></pre>
+
+<figure>
+  <img src="assets/fig/d2_Map_continuous.png" alt="世界地图连续色阶">
+  <figcaption>图 6-1　2023 年 204 个国家缺血性心脏病年龄标化死亡率分布（连续色阶）。颜色深浅对应死亡率高低，底部为六个区域放大图，避免小面积国家难以辨识。</figcaption>
+</figure>
+
+<figure>
+  <img src="assets/fig/d2_Map_discrete.png" alt="世界地图离散色阶">
+  <figcaption>图 6-2　同一数据的五分位离散色阶。分位分组强调相对位置，等值分组（连续色阶）强调绝对水平，两者应依据论述目的选择。</figcaption>
+</figure>
+
+<pre><code># 区域裁剪：东亚范围
+d2.Map(data = dm, variable = "val", legend_title = "ASMR (per 100,000)",
+       longitude_min = 90, longitude_max = 150,
+       latitude_min = 10, latitude_max = 55)</code></pre>
+
+<figure>
+  <img src="assets/fig/d2_Map_region.png" alt="区域裁剪地图">
+  <figcaption>图 6-3　经经纬度范围裁剪后的东亚专题图。裁剪不改变数据，仅调整视窗，适用于区域聚焦的报告版面。</figcaption>
+</figure>
+
+<h2 class="ch" id="s7"><span class="num">7</span>年龄-时期-队列模型</h2>
+
+<p>年龄-时期-队列（Age-Period-Cohort, APC）模型将率的变化分解为年龄效应、时期效应与队列效应三部分，用于识别横断面趋势背后的结构性来源。模型存在年龄、时期、队列三者的线性依赖（时期 = 年龄 + 队列），需施加约束方可识别；本包的参考年龄与参考年份即用于设置该约束。</p>
+
+<h3 id="e1">7.1　e1.APC：模型拟合</h3>
+<pre><code>e1.APC(data, from_year = 1994, to_year = 2023,
+       referAge = NULL, referYear = NULL,
+       measure = NULL, location = NULL, sex = NULL,
+       rei = NULL, cause = NULL)</code></pre>
+<table>
+  <thead><tr><th style="width:130px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>data</code></td><td>需含年龄组、年份与 <code>val</code>；<code>cause</code>、<code>measure</code>、<code>location</code>、<code>sex</code>、<code>rei</code> 须为唯一值，<code>metric</code> 取 Number</td></tr>
+    <tr><td><code>from_year</code> / <code>to_year</code></td><td>起止年份，须与数据年份连续对应；默认 1994—2023</td></tr>
+    <tr><td><code>referAge</code></td><td>参考年龄段左端点，默认自动设定</td></tr>
+    <tr><td><code>referYear</code></td><td>参考年份，默认自动设定</td></tr>
+  </tbody>
+</table>
+<pre><code>dapc &lt;- a3.GBDfilter(data = dat, measure = 3, sex = 3, age = 3,
+                     location = 5, metric = 1,
+                     cause = "Ischemic heart disease")
+
+r_apc &lt;- e1.APC(data = dapc, from_year = 1994, to_year = 2023)
+names(r_apc)
+# [1] "NetDrift"    "LocalDrifts" "LongAge"     "PeriodRR"    "CohortRR"</code></pre>
+<p>返回值是列表，五个元素分别对应净漂移、局部漂移、年龄纵向曲线、时期相对风险与队列相对风险。后续 <code>e2.plotAPC()</code>、<code>l1.GBDsave()</code> 均以该列表为输入。</p>
+
+<h3 id="e2">7.2　e2.plotAPC：效应曲线</h3>
+<pre><code>e2.plotAPC(data, type = "All", CI = TRUE, group_name = NULL,
+           line_size = 1, measure = NULL, location = NULL,
+           sex = NULL, rei = NULL, cause = NULL)</code></pre>
+<p><code>type</code> 可取 <code>"LongAge"</code>（1）、<code>"Cohort"</code>（2）、<code>"Period"</code>（3）、<code>"Drift"</code>（4）与 <code>"All"</code>（5），数字与字符串两种写法等价。</p>
+<pre><code>e2.plotAPC(data = r_apc, type = 1)   # 年龄纵向曲线
+e2.plotAPC(data = r_apc, type = 4)   # 局部漂移与净漂移
+e2.plotAPC(data = r_apc, type = 5)   # 四图拼合</code></pre>
+
+<figure>
+  <img src="assets/fig/e2_plotAPC_type1.png" alt="APC 年龄纵向曲线">
+  <figcaption>图 7-1　年龄纵向曲线（Longitudinal Age Curve）。纵轴为率，横轴为年龄组，曲线呈指数上升形态，反映年龄本身的效应。</figcaption>
+</figure>
+
+<figure>
+  <img src="assets/fig/e2_plotAPC_type4.png" alt="APC 局部漂移与净漂移">
+  <figcaption>图 7-2　局部漂移与净漂移。横轴为年龄组，纵轴为年变化百分比，水平实线为净漂移。各年龄组漂移围绕净漂移波动且无系统偏离，提示年龄效应在观察期内基本稳定。</figcaption>
+</figure>
+
+<figure>
+  <img src="assets/fig/e2_plotAPC_type5.png" alt="APC 四图拼合">
+  <figcaption>图 7-3　<code>type = "All"</code> 输出的 2×2 拼合图，含年龄纵向曲线（A）、队列相对风险（B）、时期相对风险（C）与局部漂移（D）。C 图在 2010 年前后出现折点，与第 8 章 Joinpoint 识别的转折年份一致。</figcaption>
+</figure>
+
+<h2 class="ch" id="s8"><span class="num">8</span>Joinpoint 回归</h2>
+
+<p>Joinpoint 回归以分段对数线性模型拟合率的时间序列，通过网格搜索与置换检验确定转折点数量与位置，输出各段的年度变化百分比（APC）及全区间平均年度变化百分比（AAPC）。该方法不预设趋势形态，适用于存在政策干预或筛查普及等结构性变化的情形。</p>
+
+<h3 id="f1">8.1　f1.Joinpoint：转折点估计</h3>
+<pre><code>f1.Joinpoint(data, ASR = TRUE, metric = "Rate",
+             from_year = 1990, to_year = 2023,
+             model = "ln", joinpoints = 5, rei = FALSE,
+             CI = TRUE, decimal_places = 2, ci_connector = " to ")</code></pre>
+<table>
+  <thead><tr><th style="width:130px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>ASR</code></td><td><code>TRUE</code> 仅使用 <code>age = Age-standardized</code> 的行；<code>FALSE</code> 使用具体年龄组</td></tr>
+    <tr><td><code>model</code></td><td>拟合模型族，<code>"ln"</code>（对数线性）最常用，另有 <code>"identity"</code>、<code>"loglog"</code></td></tr>
+    <tr><td><code>joinpoints</code></td><td>允许的最大转折点数，默认 5；点数越多计算量越大</td></tr>
+    <tr><td><code>from_year</code> / <code>to_year</code></td><td>起止年份，须连续且与数据一致</td></tr>
+  </tbody>
+</table>
+<pre><code>djp &lt;- a3.GBDfilter(data = dat, measure = 3, sex = 3, age = 1,
+                    location = c("4", "5"), metric = 2,
+                    cause = "Ischemic heart disease", year = 1990:2023)
+
+r_jp &lt;- f1.Joinpoint(data = djp, ASR = TRUE, metric = "Rate",
+                     from_year = 1990, to_year = 2023)
+
+r_jp$AAPC[, c("location", "AAPC", "AAPC_LCI", "AAPC_UCI", "P.Value")]
+#   location    AAPC AAPC_LCI AAPC_UCI P.Value
+# 1    China -0.9863  -1.0069  -0.9659       0
+# 7   Global -1.0093  -1.0290  -0.9897       0</code></pre>
+<p>返回列表含 <code>AAPC</code>、<code>AAPC_Range</code>、<code>APC</code>、<code>data</code> 与 <code>label</code>。<code>APC</code> 给出每一分段的斜率与区间，可将转折年份与政策事件对应解读。</p>
+
+<div class="warn">
+<strong>运行前提</strong>　该函数为 Joinpoint 命令行程序（jpCommand.exe）的批处理封装，仅支持 Windows；执行路径不得包含中文字符，否则程序无法定位输入文件。函数运行期间会在工作目录生成若干中间文件，并在结束时自动清理。
+</div>
+
+<h3 id="f2">8.2　f2.plotJoinpoint：单组拟合图</h3>
+<pre><code>f2.plotJoinpoint(data, measure = NULL, location = NULL, sex = NULL,
+                 age = NULL, rei = NULL, cause = NULL, metric = NULL,
+                 text_shift_y = 0, facet_expr = NULL,
+                 point_color = "darkred", joinpointtext = TRUE,
+                 joinpointtext_color = "darkred", line_size = 1)</code></pre>
+<pre><code>f2.plotJoinpoint(data = r_jp,
+                 facet_expr = "ASMR of ischaemic heart disease",
+                 point_color = c("darkred", "darkred"))</code></pre>
+
+<figure>
+  <img src="assets/fig/f2_plotJoinpoint.png" alt="Joinpoint 单组拟合图">
+  <figcaption>图 8-1　1990—2023 年缺血性心脏病年龄标化死亡率 Joinpoint 拟合。散点为观测值，折线为分段回归拟合，右侧标注各段 APC 与全区间 AAPC。两条曲线分别为中国与全球，二者均呈下降，中国降幅略小。</figcaption>
+</figure>
+
+<div class="note">
+<strong>颜色参数</strong>　<code>point_color</code> 需提供不少于散点类别数的颜色。默认单色在存在两个及以上类别时触发错误 <code>Insufficient values in manual scale</code>，此时改为长度 ≥2 的向量即可。
+</div>
+
+<h3 id="f3">8.3　f3.plotJoinpoint2：多组拟合图</h3>
+<p>在同一坐标系中比较多个分组（地区、性别等）的拟合曲线，用颜色与点形区分分组。</p>
+<pre><code>f3.plotJoinpoint2(data, group_name = "location", measure = NULL, ...,
+                  text_shift_y = -0.01, facet_expr = NULL,
+                  color_group = c("#E41A1C", "#377EB8", ...),
+                  shape_group = c(13, 14, 15, 16, 17, 18),
+                  joinpointtext = TRUE, line_size = 1)</code></pre>
+<pre><code>f3.plotJoinpoint2(data = r_jp, group_name = "location",
+                  color_group = c("#E41A1C", "#377EB8"),
+                  shape_group = c(16, 17),
+                  facet_expr = "ASMR (per 100,000)")</code></pre>
+
+<figure>
+  <img src="assets/fig/f3_plotJoinpoint2.png" alt="Joinpoint 多组拟合图">
+  <figcaption>图 8-2　以地区为分组的多组 Joinpoint 拟合图。颜色与点形共同标识分组，转折点位置以竖直标注线给出。</figcaption>
+</figure>
+
+<div class="note">
+<strong>数据要求</strong>　该函数要求拟合结果中存在至少一个转折点。若序列在全区间内单调（转折点数为 0），函数将终止并提示「数据中没有转折点，无法进行 apc 的绘制」，此时应改用 <code>f2.plotJoinpoint()</code>。
+</div>
+
+<h2 class="ch" id="s9"><span class="num">9</span>疾病负担分解</h2>
+
+<p>分解分析将两个时点间绝对负担的差值，拆分为人口规模、人口年龄结构与流行病学变化（年龄别率）三项贡献。采用 Das Gupta 分解法，三项贡献之和等于总变化。</p>
+
+<h3 id="g1">9.1　g1.decomposition：三因素分解</h3>
+<pre><code>g1.decomposition(data, year_base = 1990, year_compare = 2023,
+                 from_age = 0, to_age = 95)</code></pre>
+<pre><code>ddec &lt;- a3.GBDfilter(data = dat, measure = 3, age = 3,
+                     location = c("4", "5"),
+                     cause = "Ischemic heart disease",
+                     year = c(1990, 2023))
+
+r_dec &lt;- g1.decomposition(data = ddec, year_base = 1990, year_compare = 2023,
+                          from_age = 5, to_age = 95)
+
+r_dec[, c("location", "sex", "Aging", "Population",
+          "Epidemiological change", "percent change of Aging")]
+#   location  sex    Aging Population Epidemiological change percent change of Aging
+# 1    China Male   297419      94372                -134208                   115.5
+# 2    China Female 335589     110992                -146910                   112.0
+# 3    China Both   632707     205301                -274088                   112.2
+# 4   Global Male   614635     646231                -485097                    79.2
+# 5   Global Female 679454     789414                -574766                    76.0
+# 6   Global Both  1302366    1442213               -1052815                    77.0</code></pre>
+<p>以中国两性合并为例：1990—2023 年死亡数净增约 56.4 万，其中人口老龄化贡献 +63.3 万（占总变化 112.2%）、人口规模增长贡献 +20.5 万（36.4%）、流行病学变化贡献 −27.4 万（−48.6%）。三项之和等于总变化量，负值表示该因素起到抵消作用。</p>
+
+<div class="warn">
+<strong>数据完整性</strong>　分解要求基准年与对比年各自具备完整的 5 岁年龄组数据，且 <code>metric</code> 同时包含 Number 与 Rate。缺失任一条件将返回「数据中没有各个年龄段的 Number 数据」或「没有用 from_age、to_age 形成的所有数据」的提示。
+</div>
+
+<h3 id="g2">9.2　g2.plotDecom：分解结果图示</h3>
+<pre><code>g2.plotDecom(data, group_name = NULL, measure = NULL, location = NULL,
+             sex = NULL, rei = NULL, cause = NULL,
+             point_size = 3, point_color = "black", color_scheme = "a")</code></pre>
+<pre><code>g2.plotDecom(data = r_dec, group_name = "sex")</code></pre>
+
+<figure>
+  <img src="assets/fig/g2_plotDecom.png" alt="三因素分解图">
+  <figcaption>图 9-1　1990—2023 年缺血性心脏病死亡数变化的三因素分解。横轴为地区，纵轴为贡献的绝对量，三类标记分别对应老龄化、人口规模与流行病学变化。老龄化与人口增长均为正向贡献，流行病学变化为负向贡献，在两地均部分抵消了前两者。</figcaption>
+</figure>
+
+<h2 class="ch" id="s10"><span class="num">10</span>趋势预测</h2>
+
+<h3 id="h1">10.1　h1.GBDBAPC：贝叶斯年龄-时期-队列预测</h3>
+<p>以贝叶斯 APC 模型对年龄别率建模，结合未来人口预测得到绝对数量的外推结果。该方法以先验约束平滑年龄、时期与队列效应，适用于长期预测。</p>
+<pre><code>h1.GBDBAPC(data, CompletedAge = TRUE, measure = NULL, location = NULL,
+           rei = NULL, cause = NULL, CheckSex = TRUE, byyear = 2036)</code></pre>
+<table>
+  <thead><tr><th style="width:150px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>CompletedAge</code></td><td>数据含完整年龄组（0–95+）时为 <code>TRUE</code>；仅含部分年龄段时为 <code>FALSE</code></td></tr>
+    <tr><td><code>CheckSex</code></td><td><code>TRUE</code> 分别建模男性与女性；<code>FALSE</code> 仅建模两性合并</td></tr>
+    <tr><td><code>byyear</code></td><td>预测终止年份</td></tr>
+  </tbody>
+</table>
+<pre><code>d_bapc &lt;- a3.GBDfilter(data = dat, measure = 3, age = c("3", "1", "2"),
+                       location = 5, year = 1990:2023,
+                       cause = "Ischemic heart disease")
+r_bapc &lt;- h1.GBDBAPC(data = d_bapc, CheckSex = FALSE, byyear = 2036)
+names(r_bapc)
+# [1] "all_age_projection" "crude_rate" "ASR"
+# [4] "Age_standardized_projection" "age_specific_rate" "age_specific_projection"</code></pre>
+<div class="note">
+<strong>依赖说明</strong>　该函数需 <code>INLA</code> 与 <code>BAPC</code> 两个包，二者均不在 CRAN 主干仓库。单次建模耗时较长，建议仅对一个维度（如性别）运行。若环境不具备上述依赖，可改用本章第 4 节的 ARIMA 方案。
+</div>
+
+<h3 id="h2">10.2　h2.plotPredASR 与 h3.plotPredNumberASR</h3>
+<p>两者均以 <code>h1.GBDBAPC()</code> 的返回列表为输入：前者绘制年龄标化率的预测曲线，后者绘制数量与率的双轴预测图。</p>
+<pre><code>h2.plotPredASR(data, CI = TRUE, pred_year_start = 2024, group_name = NULL,
+               measure = NULL, location = NULL, sex = NULL, ...)
+
+h3.plotPredNumberASR(data, scale_ratio = "auto", CI = TRUE,
+                     pred_year_start = 2024, group_name = NULL, ...)</code></pre>
+<pre><code>h2.plotPredASR(data = r_bapc, group_name = "sex")
+h3.plotPredNumberASR(data = r_bapc, CI = FALSE, group_name = "sex")</code></pre>
+<p><code>pred_year_start</code> 用于区分观测期与预测期，早于该年份的曲线以实线表示，之后为虚线或阴影区间。</p>
+
+<h3 id="h4">10.3　h4.GBDARIMA：ARIMA 预测</h3>
+<p>对各维度组合分别拟合 ARIMA 模型并外推，输出观测期与预测期合并数据。该方法仅依赖时间序列自身结构，不引入人口预测，适用于短期外推与敏感性分析。</p>
+<pre><code>h4.GBDARIMA(data, measure = NULL, location = NULL, sex = NULL, age = NULL,
+            cause = NULL, rei = NULL, metric = NULL, byyear = 27)</code></pre>
+<pre><code>dar &lt;- dat[dat$measure == "Deaths" &amp; dat$age == "Age-standardized" &amp;
+             dat$metric == "Rate" &amp; dat$location %in% c("China", "Global") &amp;
+             dat$cause == "Ischemic heart disease" &amp; dat$sex == "Both", ]
+
+r_ari &lt;- h4.GBDARIMA(data = dar, byyear = 8)
+r_ari$total_models
+# [1] 2
+nrow(r_ari$forecast_data)
+# [1] 16</code></pre>
+<table>
+  <thead><tr><th style="width:190px">返回元素</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td><code>combined_data</code></td><td>观测期与预测期合并数据</td></tr>
+    <tr><td><code>forecast_data</code></td><td>仅预测期数据，含区间上下限</td></tr>
+    <tr><td><code>historical_data</code></td><td>仅观测期数据</td></tr>
+    <tr><td><code>model_summary</code></td><td>各组的模型阶数与拟合指标</td></tr>
+    <tr><td><code>dimension_combinations</code></td><td>实际参与建模的维度组合</td></tr>
+  </tbody>
+</table>
+
+<h3 id="h5">10.4　h5.plotARIMA：预测曲线</h3>
+<pre><code>h5.plotARIMA(data, measure = NULL, location = NULL, sex = NULL, age = NULL,
+             cause = NULL, rei = NULL, metric = NULL, group_by = NULL,
+             color_scheme = "a", custom_colors = NULL,
+             xlab = "Year", ylab = "Value",
+             show_confidence = TRUE, linesize = 1.2)</code></pre>
+<pre><code>h5.plotARIMA(data = r_ari, group_by = "location",
+             ylab = "ASMR (per 100,000)")</code></pre>
+
+<figure>
+  <img src="assets/fig/h5_plotARIMA.png" alt="ARIMA 预测曲线">
+  <figcaption>图 10-1　1990—2023 年观测值与 2024—2031 年 ARIMA 预测值。实线为观测期，阴影为 95% 预测区间，区间宽度随外推步长增加而扩大，反映不确定性累积。</figcaption>
+</figure>
+
+<h2 class="ch" id="s11"><span class="num">11</span>前沿分析</h2>
+
+<p>前沿分析以社会发展指数（SDI）为横轴、疾病负担率为纵轴，拟合可达最低负担的边界曲线。某国家实际率与同 SDI 水平前沿值之差定义为效率差（effective difference），用于衡量在既有社会经济条件下可改进的空间。</p>
+
+<h3 id="i1">11.1　i1.Frontier：前沿估计</h3>
+<pre><code>i1.Frontier(data, measure = NULL, sex = NULL, age = NULL,
+            rei = NULL, cause = NULL, bootstrap = 100)</code></pre>
+<pre><code>fmap &lt;- mapd[mapd$metric == "Rate", ]
+r_fr &lt;- i1.Frontier(data = fmap, bootstrap = 20)
+
+names(r_fr)
+# [1] "location" "year" "Rate" "SDI" "frontier" "eff_diff" "Rate_minyear" "trend"</code></pre>
+<p>返回列为国家、年份、实测率、SDI、前沿值、效率差、历史最低率及其趋势。<code>bootstrap</code> 为重抽样次数，用于估计前沿的不确定性，取值越大结果越稳定而耗时越长。</p>
+
+<h3 id="i2">11.2　i2.plotFrontier：前沿图</h3>
+<pre><code>i2.plotFrontier(data, span = 0.2, type = 1)</code></pre>
+<pre><code>i2.plotFrontier(data = r_fr, type = 1)   # 仅最新年份
+i2.plotFrontier(data = r_fr, type = 2)   # 全部年份</code></pre>
+
+<figure>
+  <img src="assets/fig/i2_plotFrontier_type1.png" alt="前沿分析图（单年）">
+  <figcaption>图 11-1　2023 年 SDI 与年龄标化死亡率的前沿关系。<code>span</code> 为 LOESS 平滑参数，控制前沿曲线的平滑程度；散点越接近前沿，可改进空间越小。</figcaption>
+</figure>
+
+<figure>
+  <img src="assets/fig/i2_plotFrontier_type2.png" alt="前沿分析图（多年）">
+  <figcaption>图 11-2　1990—2023 年全部年份的前沿关系。各年前沿整体下移，表明相同 SDI 水平下的可达最低负担随时间改善。</figcaption>
+</figure>
+
+<h2 class="ch" id="s12"><span class="num">12</span>健康不平等</h2>
+
+<p>健康不平等测度以 SDI 对 204 个国家排序，计算负担在人群分布中的集中程度。斜率指数（Slope Index of Inequality, SII）为率对相对位次的回归斜率，反映最高与最低 SDI 端的绝对差；集中指数（Concentration Index, CI）为相对差异的归一化度量，取值 −1 至 1。</p>
+
+<h3 id="j1">12.1　j1.GBDInequality：指数计算</h3>
+<pre><code>j1.GBDInequality(data, type = "CI", metric_name = "Rate",
+                 CompletedAge = NULL, B = 1000)</code></pre>
+<table>
+  <thead><tr><th style="width:150px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>type</code></td><td><code>"SII"</code> 计算斜率指数；<code>"CI"</code> 计算集中指数</td></tr>
+    <tr><td><code>metric_name</code></td><td>参与计算的度量，通常取 Rate</td></tr>
+    <tr><td><code>CompletedAge</code></td><td>年龄向量或 <code>NULL</code>；取 <code>c(25, 45)</code> 表示按 25–49 岁口径解释已标化结果</td></tr>
+    <tr><td><code>B</code></td><td>bootstrap 次数，仅 <code>type = "CI"</code> 时生效，用于估计标准误与 P 值</td></tr>
+  </tbody>
+</table>
+<pre><code>fmap &lt;- mapd[mapd$metric == "Rate" &amp; mapd$year %in% c(1990, 2023), ]
+
+r_sii &lt;- j1.GBDInequality(data = fmap, type = "SII")
+r_sii$SlopeIndexofInequality
+#   year   lm lm_lower lm_upper ncvTest_p    rlm rlm_lower rlm_upper
+# 1 1990 32.51    30.02    35.00    0.0340  32.37     29.94     34.80
+# 2 2023 22.99    21.65    24.32    0.0040  22.47     21.22     23.72
+
+r_ci &lt;- j1.GBDInequality(data = fmap, type = "CI", B = 50)
+r_ci$ConcentrationIndex
+#   year Concentration.index     SE     lci    uci p
+# 1 1990               0.108 0.0284  0.0611 0.1505 0
+# 2 2023               0.118 0.0241  0.0826 0.1714 0</code></pre>
+<p>SII 由 1990 年的 32.51 降至 2023 年的 22.99，绝对不平等程度收窄；同期 CI 由 0.108 微升至 0.118，相对不平等略有扩大。两项指标方向不一致，源于率整体下降导致同样的绝对差对应更大的相对差，报告中需同时列示。</p>
+<p><code>ncvTest_p</code> 为异方差检验 P 值，取值小于 0.05 时普通最小二乘估计的方差不再可靠，应以稳健回归（<code>rlm</code>）结果为主。</p>
+
+<h3 id="j2">12.2　j2.SIIplot 与 j3.CIplot：不平等曲线</h3>
+<pre><code>j2.SIIplot(data, type = "rlm", color_scheme = "b", measure = NULL,
+           age = NULL, sex = NULL, rei = NULL, cause = NULL,
+           year = c(1990, 2023))
+
+j3.CIplot(data, type = "smooth", color_scheme = "c", measure = NULL,
+          sex = NULL, cause = NULL, rei = NULL, age = NULL,
+          year = c(1990, 2023))</code></pre>
+<pre><code>j2.SIIplot(data = r_sii, year = c(1990, 2023))
+j3.CIplot(data = r_ci,  year = c(1990, 2023))</code></pre>
+
+<figure>
+  <img src="assets/fig/j2_SIIplot.png" alt="斜率指数曲线">
+  <figcaption>图 12-1　1990 年与 2023 年的斜率指数拟合线。横轴为国家按 SDI 的相对位次，纵轴为年龄标化死亡率，两条拟合线的斜率即 SII；斜率变缓对应绝对不平等缩小。</figcaption>
+</figure>
+
+<figure>
+  <img src="assets/fig/j3_CIplot.png" alt="集中指数曲线">
+  <figcaption>图 12-2　集中指数曲线。横轴为按 SDI 排序的累积人口比重，纵轴为累积负担比重，曲线偏离对角线的程度对应 CI 的大小；<code>type = "smooth"</code> 采用 GAM 平滑，<code>"line"</code> 为折线连接。</figcaption>
+</figure>
+
+<h2 class="ch" id="s13"><span class="num">13</span>SDI 与风险因素</h2>
+
+<h3 id="k1">13.1　k1.plotSDIASR：SDI 与疾病负担的关联</h3>
+<p>以 SDI 为横轴、标化率为纵轴绘制散点并拟合 LOESS 曲线，标注相关系数与 P 值，用于判断负担与社会经济发展水平的关系形态（线性或阈值型）。</p>
+<pre><code>k1.plotSDIASR(data, span_val = 0.5, show_se = FALSE, show_pvalue = TRUE,
+              highlight_location = NULL, highlight_color = NULL,
+              standard = NULL, method = "spearman", fig_type = 1)</code></pre>
+<table>
+  <thead><tr><th style="width:160px">参数</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>fig_type</code></td><td><code>2</code> 绘制单一年份截面；<code>1</code> 绘制多年序列</td></tr>
+    <tr><td><code>method</code></td><td>相关系数类型，可选 <code>"spearman"</code>、<code>"pearson"</code>、<code>"kendall"</code></td></tr>
+    <tr><td><code>highlight_location</code></td><td>需高亮的国家名称，配合 <code>highlight_color</code> 命名向量使用</td></tr>
+    <tr><td><code>standard</code></td><td>数据同时含 <code>Age-standardized</code> 与 <code>All ages</code> 时须显式指定</td></tr>
+  </tbody>
+</table>
+<pre><code>f23 &lt;- mapd[mapd$metric == "Rate" &amp; mapd$year == 2023, ]
+k1.plotSDIASR(data = f23, fig_type = 2,
+              highlight_location = "China",
+              highlight_color = c("China" = "red"))</code></pre>
+
+<figure>
+  <img src="assets/fig/k1_plotSDIASR_single.png" alt="SDI 与 ASMR 相关图">
+  <figcaption>图 13-1　2023 年 204 个国家 SDI 与缺血性心脏病年龄标化死亡率的关系。灰点为各国观测，曲线为 LOESS 平滑，图内标注 Spearman 相关系数与 P 值，红色点为中国。</figcaption>
+</figure>
+
+<h3 id="k2">13.2　k2.plotHeatRisk：风险因素归因分数热图</h3>
+<p>以风险因素为纵轴、地区为横轴，颜色表示人群归因分数（PAF）的百分比，用于横向比较各风险因素在不同地区的相对重要性。</p>
+<pre><code>k2.plotHeatRisk(data, measure = NULL, sex = NULL, age = NULL,
+                cause = NULL, metric = NULL, year = NULL,
+                sort_location = NULL,
+                legend_name = "Population attributable\nfractions (%)",
+                palette = "a", colors_custom = NULL)</code></pre>
+<pre><code>k2.plotHeatRisk(data = risk, year = 2023, sort_location = "China")</code></pre>
+
+<figure>
+  <img src="assets/fig/k2_plotHeatRisk.png" alt="风险因素热图">
+  <figcaption>图 13-2　2023 年各风险因素归因于缺血性心脏病 DALY 的人群归因分数。行按指定地区（中国）的数值排序，颜色由浅至深对应归因分数递增。</figcaption>
+</figure>
+
+<h3 id="k3">13.3　k3.plotRankRisk：风险因素排名变化</h3>
+<p>以哑铃图呈现两个年份的排名对比，连线形态表示排名升降，用于识别权重上升或下降的风险因素。</p>
+<pre><code>k3.plotRankRisk(data, measure = NULL, location = NULL, sex = NULL,
+                age = NULL, cause = NULL, metric = NULL,
+                years = c(1990, 2023), palette = "a",
+                risk_colors = NULL, text_size = 4)</code></pre>
+<pre><code>k3.plotRankRisk(data = risk, years = c(1990, 2023))</code></pre>
+
+<figure>
+  <img src="assets/fig/k3_plotRankRisk.png" alt="风险因素排名变化图">
+  <figcaption>图 13-3　1990 年与 2023 年风险因素排名对比。方框内数字为名次，实线连接表示排名上升，虚线表示下降。</figcaption>
+</figure>
+
+<h3 id="k4">13.4　k4.plotHeatRank：地区内部排名热图</h3>
+<p>在各地区内部对风险因素单独排名，并按 Top1、Top3、Top7 等区间着色，用于识别地区特异性主导风险。</p>
+<pre><code>k4.plotHeatRank(data, measure = NULL, sex = NULL, age = NULL, cause = NULL,
+                metric = NULL, year = NULL, sort_location = NULL,
+                legend_name = "Rank Group", palette = "a",
+                colors_custom = NULL, label_size = 2.5)</code></pre>
+<pre><code>k4.plotHeatRank(data = risk, year = 2023, sort_location = "Global")</code></pre>
+
+<figure>
+  <img src="assets/fig/k4_plotHeatRank.png" alt="风险因素排名热图">
+  <figcaption>图 13-4　2023 年各地区风险因素内部排名热图。单元格内数字为该风险因素在该地区的名次，颜色分组对应名次区间。</figcaption>
+</figure>
+
+<h2 class="ch" id="s14"><span class="num">14</span>质量照护指数</h2>
+
+<p>质量照护指数（Quality of Care Index, QCI）由四个比值指标经主成分分析合成：死亡率与发病率之比（MIR）、 years of life lost 与 years lived with disability 之比（YLR）、DALY 与患病率之比（DPR）、患病率与发病率之比（PIR）。指数归一化至 0–100，数值越高表示在既定发病水平下的结局转归越好。</p>
+
+<pre><code>m1.GBDQCI(data)</code></pre>
+<p>输入数据须满足两项条件：<code>metric</code> 含 <code>"Rate"</code>；同一 <code>cause-age-sex-location-year</code> 分组下同时具备 Incidence、Prevalence、Deaths、DALYs、YLDs、YLLs 六类 <code>measure</code>。</p>
+<pre><code>r_qci &lt;- m1.GBDQCI(data = qci_data)
+
+head(r_qci[, c("location", "year", "MIR", "YLR", "DPR", "PIR", "QCI")])
+#   location year   MIR   YLR   DPR   PIR    QCI
+# 1    China 1990 0.336 5.302 0.572 11.55   0.00
+# 2    China 2005 0.284 5.894 0.579 10.21 100.00
+# 3    China 2023 0.294 5.660 0.620 10.50  76.40
+# 4   Global 1990 0.338 5.895 0.618 11.47  25.93
+# 5   Global 2005 0.327 5.899 0.656 10.42  68.78
+# 6   Global 2023 0.325 6.202 0.602 10.84  66.09</code></pre>
+<table>
+  <thead><tr><th style="width:150px">输出列</th><th>含义</th></tr></thead>
+  <tbody>
+    <tr><td><code>MIR</code></td><td>死亡率 / 发病率，越小表示发病后致死比例越低</td></tr>
+    <tr><td><code>YLR</code></td><td>YLLs / YLDs，越小表示负担中早死占比越低</td></tr>
+    <tr><td><code>DPR</code></td><td>DALYs / 患病率，反映单位患病人群的失能损失</td></tr>
+    <tr><td><code>PIR</code></td><td>患病率 / 发病率，反映病程长度</td></tr>
+    <tr><td><code>QCI</code></td><td>合成指数，0–100，越高表示照护质量越好</td></tr>
+  </tbody>
+</table>
+<p>示例结果显示，中国由 1990 年的 0 升至 2023 年的 76.40，全球由 25.93 升至 66.09。<code>QCI</code> 为组内相对位置，跨组比较时应结合原始比值判读，不宜单独使用。</p>
+<div class="note">
+<strong>样本量提示</strong>　当参与主成分分析的分组数较少时，函数会提示「QCI 计算样本数较少，主成分分析结果可能不稳定」。此时应补充年份或地区以获得足够的观测。
+</div>
+
+<h2 class="ch" id="s15"><span class="num">15</span>结果导出</h2>
+
+<p><code>l1.GBDsave()</code> 依据分析类型将结果写入 CSV，文件写至当前工作目录。3.x 版本提供该函数，按 <code>type</code> 决定从输入对象中提取哪些数据框。</p>
+<pre><code>l1.GBDsave(data, type = c("EAPC", "ASR", "APC", "Joinpoint",
+                          "Decomposition", "BAPC"),
+           filename_prefix = "result")</code></pre>
+<table>
+  <caption>表 15-1　导出类型与输入对象、输出文件的对应关系</caption>
+  <thead><tr><th style="width:130px">type</th><th style="width:120px">输入对象</th><th>输出文件</th></tr></thead>
+  <tbody>
+    <tr><td><code>"EAPC"</code></td><td>单表</td><td><code>&lt;prefix&gt;_EAPC.csv</code></td></tr>
+    <tr><td><code>"ASR"</code></td><td>单表</td><td><code>&lt;prefix&gt;_ASR.csv</code></td></tr>
+    <tr><td><code>"APC"</code></td><td>e1.APC 列表</td><td>NetDrift、LocalDrifts、CohortRR、LongAge、PeriodRR 各一个 CSV</td></tr>
+    <tr><td><code>"Joinpoint"</code></td><td>f1.Joinpoint 列表</td><td>AAPC 与 APC 两个 CSV</td></tr>
+    <tr><td><code>"Decomposition"</code></td><td>单表</td><td><code>&lt;prefix&gt;_Decomposition.csv</code></td></tr>
+    <tr><td><code>"BAPC"</code></td><td>h1.GBDBAPC 列表</td><td>列表中全部数据框各一个 CSV</td></tr>
+  </tbody>
+</table>
+<pre><code>l1.GBDsave(data = r3,      type = "EAPC",        filename_prefix = "China_EAPC")
+l1.GBDsave(data = r_jp,    type = "Joinpoint",   filename_prefix = "China_JP")
+l1.GBDsave(data = r_dec,   type = "Decomposition", filename_prefix = "China_Dec")</code></pre>
+<p>文件命名规则为 <code>paste0(filename_prefix, "_", 元素名, ".csv")</code>，前缀中不宜包含路径分隔符以外的特殊字符。函数无返回值，仅以副作用形式写盘。</p>
+
+<h2 class="ch" id="s16"><span class="num">16</span>常见问题</h2>
+
+<h3>16.1　加载阶段失败</h3>
+<p>若 <code>library(ZtGBD)</code> 报「there is no package called 'X'」，说明声明依赖未安装完整。依赖检查应基于 <code>DESCRIPTION</code> 的 Imports 字段而非逐个试错：读取包描述文件后与 <code>installed.packages()</code> 取差集，可一次性列出全部缺失项。</p>
+<p>若报「未授权」而授权码无误，需确认授权校验接口的可达性。该接口为联网校验，服务不可用时返回 <code>HTTP错误: 500</code>，此时任何有效授权码均无法通过，与本地文件无关。</p>
+
+<h3>16.2　筛选结果与预期不符</h3>
+<p><code>a1.GBDread()</code> 返回 <code>data.table</code>，而 <code>a3.GBDfilter()</code> 的筛选依据列名与参数名的解析顺序。参数名与列名同名时，<code>data.table</code> 优先解释为列引用，条件退化为恒真，函数返回全量数据且不报错。转换 <code>data.frame</code> 后调用可避免该问题。</p>
+
+<h3>16.3　统计函数拒绝执行</h3>
+<table>
+  <thead><tr><th style="width:180px">提示</th><th>原因与处理</th></tr></thead>
+  <tbody>
+    <tr><td>本函数不适用于含有 rei 的数据</td><td><code>b1.ASR()</code> 仅判断列是否存在，不判断是否全为 NA。删除 <code>rei</code> 列或改用 <code>b2.ASRrei()</code></td></tr>
+    <tr><td>没有各个年龄段的 Number 数据</td><td><code>g1.decomposition()</code> 需 Number 与 Rate 并存，且两侧年份的年龄组完整</td></tr>
+    <tr><td>Elements "Number 1990 (95% UI)" don't exist</td><td><code>b4.GBDtable()</code> 缺 <code>All ages</code> 的数量行，筛选中不应排除 <code>age = 2</code></td></tr>
+    <tr><td>数据中没有转折点，无法进行 apc 的绘制</td><td>序列单调，Joinpoint 未识别出转折；改用 <code>f2.plotJoinpoint()</code></td></tr>
+  </tbody>
+</table>
+
+<h3>16.4　图形渲染异常</h3>
+<p>若 <code>ggsave()</code> 报 <code>Insufficient values in manual scale</code>，说明手动色阶提供的颜色数少于分组数，应补充颜色向量。若报 <code>could not find function "bdiag"</code> 或 <code>"bandSparse"</code>，为 <code>Matrix</code> 包未加载所致，在会话中执行 <code>library(Matrix)</code> 即可。</p>
+<p>若图形中文标签显示为乱码，需在绘图前设置支持中文的字体族，或将标签改为英文。Windows 平台可使用 <code>windowsFonts()</code> 注册系统字体后在 <code>c4.modifyplot(font_family = ...)</code> 中调用。</p>
+
+<h3>16.5　Joinpoint 执行失败</h3>
+<p>该函数调用外部可执行程序，失败多与路径有关：当前工作目录含中文字符、目录不可写、或系统阻止可执行文件运行。将工作目录设为纯英文路径，并确认 <code>jpCommand.exe</code> 可被复制到该目录，即可排除多数问题。</p>
+
+<footer>
+  <p>文档对应 ZtGBD 3.1.3，示例数据为按 GBD 结果表结构模拟生成，数值仅用于演示函数行为，不代表真实流行病学估计。</p>
+  <p>图形由 R 4.5.1 实际运行输出，未作后期修饰。</p>
+</footer>
+
+</main>
+</body>
+</html>
