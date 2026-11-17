@@ -1,6 +1,6 @@
 # ZtGBD 使用教程
 
-面向全球疾病负担（Global Burden of Disease, GBD）数据的 R 函数集合 `ZtGBD` 的操作手册，覆盖数据读取与整理、率指标计算、趋势与预测建模、健康不平等测度以及结果图形化五个环节。
+面向全球疾病负担（Global Burden of Disease, GBD）数据的 R 函数集合 `ZtGBD` 的操作手册，覆盖数据获取、读取与整理、率指标计算、趋势与预测建模、健康不平等测度以及结果图形化各环节。
 
 ## 在线阅读
 
@@ -10,29 +10,31 @@
 
 ## 内容范围
 
-| 章节 | 内容 | 涉及函数 |
+| 章节 | 内容 | 涉及函数或对象 |
 |---|---|---|
 | 1 | 包体结构与运行环境 | 依赖、授权、可选组件 |
-| 2 | 数据准备与筛选 | a1.GBDread、a2.GBDFactor、a3.GBDfilter |
-| 3 | 率与趋势指标 | b1.ASR、b2.ASRrei、b3.EAPC |
-| 4 | 三线表输出 | b4.GBDtable、b5.GBDtable2 |
-| 5 | 描述性图形 | c1–c5 |
-| 6 | 地理分布制图 | d1.Mapquantile、d2.Map |
-| 7 | 年龄-时期-队列模型 | e1.APC、e2.plotAPC |
-| 8 | Joinpoint 回归 | f1.Joinpoint、f2/f3 |
-| 9 | 疾病负担分解 | g1.decomposition、g2.plotDecom |
-| 10 | 趋势预测 | h1–h5 |
-| 11 | 前沿分析 | i1.Frontier、i2.plotFrontier |
-| 12 | 健康不平等 | j1.GBDInequality、j2/j3 |
-| 13 | SDI 与风险因素 | k1–k4 |
-| 14 | 质量照护指数 | m1.GBDQCI |
-| 15 | 结果导出 | l1.GBDsave |
-| 16 | 常见问题 | 加载、筛选、渲染、路径 |
+| 2 | GBD Results Tool 数据获取 | 检索入口、控件取值、取件流程、导出整理 |
+| 3 | 数据准备与筛选 | a1.GBDread、a2.GBDFactor、a3.GBDfilter |
+| 4 | 率与趋势指标 | b1.ASR、b2.ASRrei、b3.EAPC |
+| 5 | 三线表输出 | b4.GBDtable、b5.GBDtable2 |
+| 6 | 描述性图形 | c1–c5 |
+| 7 | 地理分布制图 | d1.Mapquantile、d2.Map |
+| 8 | 年龄-时期-队列模型 | e1.APC、e2.plotAPC |
+| 9 | Joinpoint 回归 | f1.Joinpoint、f2/f3 |
+| 10 | 疾病负担分解 | g1.decomposition、g2.plotDecom |
+| 11 | 趋势预测 | h1–h5 |
+| 12 | 前沿分析 | i1.Frontier、i2.plotFrontier |
+| 13 | 健康不平等 | j1.GBDInequality、j2/j3 |
+| 14 | SDI 与风险因素 | k1–k4 |
+| 15 | 质量照护指数 | m1.GBDQCI |
+| 16 | 结果导出 | l1.GBDsave |
+| 17 | 常见问题 | 加载、筛选、渲染、路径 |
 
 ## 版本与环境
 
 - ZtGBD 3.1.3
 - R 4.5.1（Windows x64）
+- 第 2 章的界面文本与行数记录取自 GBD 2023（version 8352）环境，实测日期 2026-10-28
 - 文档内全部图形由对应脚本实际运行产生，未作后期修饰
 
 ## 关于示例数据
@@ -57,3 +59,7 @@ ztgbd-guide/
 └── assets/
     └── fig/            23 张示例图形
 ```
+
+## 使用要求
+
+GBD 数据的使用须遵守 IHME 条款：学术使用需规范引用对应版本的 Collaborators 论文，商用需单独取得授权。数据压缩包内的 `citation.txt` 应随数据一并归档。
